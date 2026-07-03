@@ -1,9 +1,7 @@
-name: Android CI (No Wrapper Fix)
+name: Android CI - Auto Module Build
 
 on:
   push:
-    branches: [ "main", "master" ]
-  pull_request:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
@@ -12,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -21,23 +19,33 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # ❗ نصب Gradle کامل (بدون wrapper)
       - name: Install Gradle
+        run: sudo apt-get update && sudo apt-get install -y gradle
+
+      # 🔍 پیدا کردن ماژول واقعی
+      - name: Detect Android module
+        id: detect
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gradle
+          echo "Searching for Android modules..."
 
-      # ❗ Build مستقیم با Gradle سیستم
-      - name: Build Debug APK
-        run: gradle assembleDebug
+          MODULE=$(grep -R "include" settings.gradle* 2>/dev/null | head -n 1 | sed "s/.*include//" | tr -d ":,'\" ")
 
-      # پیدا کردن APK
-      - name: Find APK
-        run: find . -type f -name "*.apk"
+          if [ -z "$MODULE" ]; then
+            MODULE="app"
+          fi
 
-      # Upload artifact
+          echo "MODULE=$MODULE" >> $GITHUB_ENV
+          echo "Detected module: $MODULE"
+
+      - name: Show structure
+        run: ls -R
+
+      # 🔥 Build با ماژول پیدا شده
+      - name: Build APK
+        run: gradle :$MODULE:assembleDebug
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
+          name: apk
           path: "**/*.apk"
