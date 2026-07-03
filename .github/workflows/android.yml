@@ -1,10 +1,8 @@
-name: Android CI - Stable Build Fix
+name: Android CI (No Wrapper Fix)
 
 on:
   push:
     branches: [ "main", "master" ]
-    tags:
-      - "v*.*.*"
   pull_request:
     branches: [ "main", "master" ]
   workflow_dispatch:
@@ -14,60 +12,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. دریافت کد
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. نصب Java (مهم برای Gradle)
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      # 3. بررسی ساختار پروژه (برای debug)
-      - name: Debug project structure
-        run: ls -R
-
-      # 4. بررسی اینکه gradlew وجود دارد یا نه
-      - name: Check Gradle Wrapper
+      # ❗ نصب Gradle کامل (بدون wrapper)
+      - name: Install Gradle
         run: |
-          if [ -f "./gradlew" ]; then
-            echo "Gradle wrapper found"
-            chmod +x gradlew
-          else
-            echo "Gradle wrapper NOT found - using system Gradle"
-          fi
+          sudo apt-get update
+          sudo apt-get install -y gradle
 
-      # 5. نصب Gradle سیستم (Fallback مهم)
-      - name: Install Gradle (Fallback)
-        run: sudo apt-get update && sudo apt-get install -y gradle
+      # ❗ Build مستقیم با Gradle سیستم
+      - name: Build Debug APK
+        run: gradle assembleDebug
 
-      # 6. Build APK (اول تلاش با wrapper، اگر نشد با gradle)
-      - name: Build APK
-        run: |
-          if [ -f "./gradlew" ]; then
-            ./gradlew assembleDebug
-          else
-            gradle assembleDebug
-          fi
+      # پیدا کردن APK
+      - name: Find APK
+        run: find . -type f -name "*.apk"
 
-      # 7. پیدا کردن APK ساخته شده
-      - name: Locate APK
-        run: find . -name "*.apk"
-
-      # 8. آپلود APK به عنوان Artifact
-      - name: Upload APK Artifact
+      # Upload artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: debug-apk
+          name: app-debug-apk
           path: "**/*.apk"
-
-      # 9. ساخت GitHub Release (فقط روی Tag)
-      - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: "**/*.apk"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
