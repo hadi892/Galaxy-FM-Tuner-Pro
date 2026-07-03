@@ -27,7 +27,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Grant Execute Permission for Gradle Wrapper
-        run: chmod +x ./gradlew
+        run: chmod +x ./gradlew || echo "gradlew not found, will use gradle command"
 
       - name: Decode Debug Keystore (If Available)
         run: |
