@@ -1,0 +1,6 @@
+{
+  "name": "Galaxy FM Tuner Pro",
+  "description": "Hardware-level offline FM Radio receiver and RDS stereo tuner tailored for Samsung Galaxy Tab A9+ 5G (SM-X216B)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
