@@ -29,7 +29,7 @@ jobs:
       - name: Grant Execute Permission for Gradle Wrapper
         run: chmod +x ./gradlew || echo "gradlew not found, will use gradle command"
 
-      - name: Download Gradle Wrapper JAR (if missing)
+      - name: Download Gradle Wrapper (if missing)
         run: |
           if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
             mkdir -p gradle/wrapper
@@ -37,13 +37,14 @@ jobs:
             echo "Downloading Gradle ${GRADLE_VERSION} wrapper distribution..."
             curl -fL -o /tmp/gradle-wrapper.zip https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-wrapper.zip
             if [ $? -eq 0 ]; then
-              echo "Extracting gradle-wrapper.jar..."
+              echo "Extracting gradle wrapper files..."
               unzip -p /tmp/gradle-wrapper.zip gradle-${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.jar > gradle/wrapper/gradle-wrapper.jar
-              if [ -f gradle/wrapper/gradle-wrapper.jar ]; then
-                echo "✓ Gradle wrapper JAR extracted successfully"
+              unzip -p /tmp/gradle-wrapper.zip gradle-${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.properties > gradle/wrapper/gradle-wrapper.properties
+              if [ -f gradle/wrapper/gradle-wrapper.jar ] && [ -f gradle/wrapper/gradle-wrapper.properties ]; then
+                echo "✓ Gradle wrapper extracted successfully"
                 rm -f /tmp/gradle-wrapper.zip
               else
-                echo "✗ Failed to extract gradle-wrapper.jar"
+                echo "✗ Failed to extract gradle wrapper files"
                 exit 1
               fi
             else
@@ -51,7 +52,7 @@ jobs:
               exit 1
             fi
           else
-            echo "✓ Gradle wrapper JAR already exists"
+            echo "✓ Gradle wrapper already exists"
           fi
 
       - name: Decode Debug Keystore (If Available)
