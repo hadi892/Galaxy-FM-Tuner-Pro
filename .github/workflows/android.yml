@@ -38,8 +38,8 @@ jobs:
             curl -fL -o /tmp/gradle-wrapper.zip https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-wrapper.zip
             if [ $? -eq 0 ]; then
               echo "Extracting gradle wrapper files..."
-              unzip -p /tmp/gradle-wrapper.zip gradle-${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.jar > gradle/wrapper/gradle-wrapper.jar
-              unzip -p /tmp/gradle-wrapper.zip gradle-${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.properties > gradle/wrapper/gradle-wrapper.properties
+              unzip -j /tmp/gradle-wrapper.zip "gradle-${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.jar" -d gradle/wrapper/
+              unzip -j /tmp/gradle-wrapper.zip "gradle-${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.properties" -d gradle/wrapper/
               if [ -f gradle/wrapper/gradle-wrapper.jar ] && [ -f gradle/wrapper/gradle-wrapper.properties ]; then
                 echo "✓ Gradle wrapper extracted successfully"
                 rm -f /tmp/gradle-wrapper.zip
