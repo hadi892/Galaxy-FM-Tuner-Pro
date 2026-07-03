@@ -1,87 +1,41 @@
-name: Android CI/CD Build Pipeline (SM6375 Hardware Pass-Through)
+name: Android Release Build
 
 on:
   push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
+    tags:
+      - "v*.*.*"
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build & Verify Offline Hardware FM Tuner APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: gradle
+          distribution: temurin
+          java-version: 17
 
-      - name: Setup Android SDK Environment
-        uses: android-actions/setup-android@v3
+      - name: Grant execute permission
+        run: chmod +x gradlew
 
-      - name: Grant Execute Permission for Gradle Wrapper
-        run: chmod +x ./gradlew || echo "gradlew not found, will use gradle command"
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
 
-      - name: Download Gradle Wrapper (if missing)
-        run: |
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            mkdir -p gradle/wrapper
-            GRADLE_VERSION="9.3.1"
-            echo "Downloading Gradle ${GRADLE_VERSION} wrapper distribution..."
-            curl -fL -o /tmp/gradle-wrapper.zip https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-wrapper.zip
-            if [ $? -eq 0 ]; then
-              echo "Extracting gradle wrapper files..."
-              unzip -j /tmp/gradle-wrapper.zip "gradle-${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.jar" -d gradle/wrapper/
-              unzip -j /tmp/gradle-wrapper.zip "gradle-${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.properties" -d gradle/wrapper/
-              if [ -f gradle/wrapper/gradle-wrapper.jar ] && [ -f gradle/wrapper/gradle-wrapper.properties ]; then
-                echo "✓ Gradle wrapper extracted successfully"
-                rm -f /tmp/gradle-wrapper.zip
-              else
-                echo "✗ Failed to extract gradle wrapper files"
-                exit 1
-              fi
-            else
-              echo "✗ Failed to download gradle-wrapper.zip"
-              exit 1
-            fi
-          else
-            echo "✓ Gradle wrapper already exists"
-          fi
-
-      - name: Decode Debug Keystore (If Available)
-        run: |
-          if [ -f debug.keystore.base64 ]; then
-            base64 -d debug.keystore.base64 > debug.keystore
-          fi
-
-      - name: Validate Code & Run Robolectric JVM Tests
-        run: ./gradlew testDebugUnitTest --no-daemon
-
-      - name: Build Debug APK (SM6375 / WCN399x Tuner Supported)
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
-
-      - name: Build Release APK
-        run: ./gradlew assembleRelease --stacktrace --no-daemon
-        continue-on-error: true
-
-      - name: Upload Debug APK Artifact
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SM6375-Offline-FMTuner-Debug-APK
+          name: app-debug-apk
           path: app/build/outputs/apk/debug/*.apk
-          retention-days: 30
 
-      - name: Upload Release APK Artifact (If Signed)
-        if: success()
-        uses: actions/upload-artifact@v4
+      - name: Create Release APK
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: SM6375-Offline-FMTuner-Release-APK
-          path: app/build/outputs/apk/release/*.apk
-          retention-days: 30
+          files: app/build/outputs/apk/debug/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
