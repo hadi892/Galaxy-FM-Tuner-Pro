@@ -33,11 +33,21 @@ jobs:
         run: |
           if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
             mkdir -p gradle/wrapper
-            curl -fL -o gradle/wrapper/gradle-wrapper.jar https://services.gradle.org/distributions/gradle-9.3.1-wrapper.jar
+            GRADLE_VERSION="9.3.1"
+            echo "Downloading Gradle ${GRADLE_VERSION} wrapper distribution..."
+            curl -fL -o /tmp/gradle-wrapper.zip https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-wrapper.zip
             if [ $? -eq 0 ]; then
-              echo "✓ Gradle wrapper JAR downloaded successfully"
+              echo "Extracting gradle-wrapper.jar..."
+              unzip -p /tmp/gradle-wrapper.zip gradle-${GRADLE_VERSION}/gradle/wrapper/gradle-wrapper.jar > gradle/wrapper/gradle-wrapper.jar
+              if [ -f gradle/wrapper/gradle-wrapper.jar ]; then
+                echo "✓ Gradle wrapper JAR extracted successfully"
+                rm -f /tmp/gradle-wrapper.zip
+              else
+                echo "✗ Failed to extract gradle-wrapper.jar"
+                exit 1
+              fi
             else
-              echo "✗ Failed to download gradle-wrapper.jar"
+              echo "✗ Failed to download gradle-wrapper.zip"
               exit 1
             fi
           else
