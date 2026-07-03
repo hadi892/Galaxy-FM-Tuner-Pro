@@ -29,6 +29,21 @@ jobs:
       - name: Grant Execute Permission for Gradle Wrapper
         run: chmod +x ./gradlew || echo "gradlew not found, will use gradle command"
 
+      - name: Download Gradle Wrapper JAR (if missing)
+        run: |
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            mkdir -p gradle/wrapper
+            curl -fL -o gradle/wrapper/gradle-wrapper.jar https://services.gradle.org/distributions/gradle-9.3.1-wrapper.jar
+            if [ $? -eq 0 ]; then
+              echo "✓ Gradle wrapper JAR downloaded successfully"
+            else
+              echo "✗ Failed to download gradle-wrapper.jar"
+              exit 1
+            fi
+          else
+            echo "✓ Gradle wrapper JAR already exists"
+          fi
+
       - name: Decode Debug Keystore (If Available)
         run: |
           if [ -f debug.keystore.base64 ]; then
