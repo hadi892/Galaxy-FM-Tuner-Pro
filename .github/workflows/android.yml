@@ -47,10 +47,11 @@ jobs:
             echo "Generating default debug keystore for CI..."
             keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
-          if ! keytool -list -keystore debug.keystore -storepass android | grep -q "upload"; then
-            keytool -importkeystore -srckeystore debug.keystore -srcstorepass android -srckeypass android -srcalias androiddebugkey -destkeystore debug.keystore -deststorepass android -destkeypass android -destalias upload || true
+          cp debug.keystore release.keystore
+          if ! keytool -list -keystore release.keystore -storepass android | grep -q "upload"; then
+            keytool -changealias -keystore release.keystore -storepass android -keypass android -alias androiddebugkey -destalias upload || true
           fi
-          echo "KEYSTORE_PATH=debug.keystore" >> $GITHUB_ENV
+          echo "KEYSTORE_PATH=release.keystore" >> $GITHUB_ENV
           echo "STORE_PASSWORD=android" >> $GITHUB_ENV
           echo "KEY_PASSWORD=android" >> $GITHUB_ENV
 
