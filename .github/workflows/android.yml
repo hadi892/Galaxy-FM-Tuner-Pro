@@ -50,10 +50,17 @@ jobs:
             keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
           cp debug.keystore release.keystore
+          mkdir -p app
+          cp debug.keystore app/release.keystore
+          cp debug.keystore my-upload-key.jks
+          cp debug.keystore app/my-upload-key.jks
           if ! keytool -list -keystore release.keystore -storepass android | grep -q "upload"; then
             keytool -changealias -keystore release.keystore -storepass android -keypass android -alias androiddebugkey -destalias upload || true
+            keytool -changealias -keystore app/release.keystore -storepass android -keypass android -alias androiddebugkey -destalias upload || true
+            keytool -changealias -keystore my-upload-key.jks -storepass android -keypass android -alias androiddebugkey -destalias upload || true
+            keytool -changealias -keystore app/my-upload-key.jks -storepass android -keypass android -alias androiddebugkey -destalias upload || true
           fi
-          echo "KEYSTORE_PATH=release.keystore" >> $GITHUB_ENV
+          echo "KEYSTORE_PATH=${GITHUB_WORKSPACE}/release.keystore" >> $GITHUB_ENV
           echo "STORE_PASSWORD=android" >> $GITHUB_ENV
           echo "KEY_PASSWORD=android" >> $GITHUB_ENV
 
